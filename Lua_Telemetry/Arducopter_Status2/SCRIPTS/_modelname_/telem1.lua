@@ -1,7 +1,8 @@
 -- Set by user
 local capacity_max = 5000
+
+-- init global
 local toogle_sec = 0
-local speed_max = 0
 local vspeed_max = 1
 
 local function init()
@@ -89,19 +90,19 @@ local function run(event)
   
 -- Line 3
 -- Battery voltage
-  lcd.drawText(12,                   25, getValue("vfas").."V", 0)
-  lcd.drawText(lcd.getLastPos(),     26, " ["..getValue("vfas-min").."V]", SMLSIZE)
+  lcd.drawText(12, 25, getValue("vfas").."V", 0)
+  lcd.drawText(lcd.getLastPos(), 26, " ["..getValue("vfas-min").."V]", SMLSIZE)
   
 -- Line 4
 -- Cell voltage
   lcd.drawText(12, 35, getValue("cell-min").."V", 0)
-  lcd.drawText(lcd.getLastPos(),     36, " ["..getValue("cell-min-min").."V]", SMLSIZE)
-  lcd.drawText(lcd.getLastPos(),     35, " ", 0)
+  lcd.drawText(lcd.getLastPos(), 36, " ["..getValue("cell-min-min").."V]", SMLSIZE)
+  lcd.drawText(lcd.getLastPos(), 35, " ", 0)
   
 -- Line 5
 -- Consumption
   lcd.drawText(12, 45, getValue("current").."A", 0)
-  lcd.drawText(lcd.getLastPos(),     46, " ["..getValue("current-max").."A]", SMLSIZE)
+  lcd.drawText(lcd.getLastPos(), 46, " ["..getValue("current-max").."A]", SMLSIZE)
   lcd.drawText(lcd.getLastPos() + 4, 45, getValue("power").."W", 0)
   
 -- Magnetic heading
@@ -110,8 +111,14 @@ local function run(event)
   lcd.drawPixmap((lcd.getLastPos()+75)/2-5, 23, "/SCRIPTS/BMP/craft.bmp")
   
 -- Vertical speed
-  local tmp_vspeed = getValue("vertical-speed")
   local vspeed_coord = {x1=115, y1=25, x2=115, y2=50}
+  local tmp_vspeed = getValue("vertical-speed")
+  local abs_vspeed = math.abs(tmp_vspeed)
+  -- redefine max if vspeed higher than current max
+  if abs_vspeed > vspeed_max then
+    vspeed_max = math.ceil(abs_vspeed)
+  end
+  -- vertical line
   lcd.drawLine(vspeed_coord.x1,
                vspeed_coord.y1,
                vspeed_coord.x2,
@@ -135,19 +142,18 @@ local function run(event)
                vspeed_coord.x2 + 2,
                vspeed_coord.y2,
                SOLID, 0)
-  -- redefine max if vspeed higher than current max
-  if math.abs(tmp_vspeed) > vspeed_max then
-    vspeed_max = math.ceil(math.abs(tmp_vspeed / 10)) * 10
-  end
   -- current vspeed
-  lcd.drawPixmap(vspeed_coord.x1-4,
+  lcd.drawPixmap(vspeed_coord.x1 - 4,
                  ((vspeed_coord.y1+vspeed_coord.y2)/2) - (tmp_vspeed*vspeed_coord.y1)/(2*vspeed_max) - 3,
                  "/SCRIPTS/BMP/arrow.bmp")
   lcd.drawText(vspeed_coord.x1 + 6,
                (vspeed_coord.y1 + vspeed_coord.y2) / 2 - 3,
-               math.abs(tmp_vspeed),
-               tmp_vspeed,
+               abs_vspeed,
                SMLSIZE)
+  -- lcd.drawText(vspeed_coord.x1 + 6,
+               -- vspeed_coord.y1,
+               -- vspeed_max,
+               -- SMLSIZE)
   
 ---------------------------------------------------------------------------
 -- Right column (column 3)
@@ -164,14 +170,10 @@ local function run(event)
   lcd.drawText(tmp_pos, 16+5, "m", SMLSIZE)
   
 -- Speed
-  --local tmp_speed = getValue("gps-speed")
-  --if tmp_speed > speed_max then speed_max = tmp_speed
-  --end
   lcd.drawText(142, 33, getValue("gps-speed"), MIDSIZE)
   tmp_pos = lcd.getLastPos()
   lcd.drawText(tmp_pos, 33-1, getValue("gps-speed-max"), SMLSIZE)
   lcd.drawText(tmp_pos, 33+5, "km.h", SMLSIZE)
-  --lcd.drawText(tmp_pos, 33+5, getValue("gps-speed-max"), SMLSIZE)
   
 -- Distance to home
   lcd.drawPixmap(142, 50, "/SCRIPTS/BMP/home.bmp")
@@ -187,7 +189,7 @@ local function run(event)
 -- GPS HDOP
   local gpsHdop = getApmGpsHdop()
   if gpsHdop ==  0.0 then
-    lcd.drawText(190, 30, "---", BLINK)
+    lcd.drawText(193, 30, "---", BLINK)
   elseif gpsHdop == 10.24 then
     lcd.drawText(190, 30, "HIGH", BLINK)
   elseif gpsHdop <= 2.0 then
